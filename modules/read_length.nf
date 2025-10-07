@@ -1,5 +1,6 @@
 process READ_LENGTH {
     tag "$pair_id"
+    errorStrategy 'ignore'
     publishDir "${params.outdir}/read_length", pattern: '*weighted*',  mode: 'copy'  
     publishDir "${params.outdir}/read_length", pattern: '*.read_length_plot.png', mode: 'copy'  
    
