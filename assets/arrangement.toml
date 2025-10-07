@@ -1,0 +1,30 @@
+[arrangement]
+name = "sw"
+kit = ""
+
+mask1_front = "GACCACCGAGATCTACAC"      
+mask1_rear = "AGATGTGTATAAGAGACAG"      
+
+barcode1_pattern = "sw-BC%03i"
+
+
+mask2_front = "CTGTCTCTTATACACATCT"  
+mask2_rear = "GTGTAGATCTCGGTGGTC"      
+    
+
+barcode2_pattern = "sw-RC-BC%03i"
+
+first_index = 1
+last_index = 384
+rear_only_barcodes = false
+
+## Optimized scoring for ONT data with some error tolerance
+[scoring]
+max_barcode_penalty = 3
+min_barcode_penalty_dist = 1
+min_separation_only_dist = 3
+flank_left_pad = 1
+flank_right_pad = 1
+front_barcode_window = 175
+midstrand_flank_score = 0.95
+
