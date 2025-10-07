@@ -14,7 +14,7 @@ workflow {
     fq_ch= Channel.fromPath(params.input)
              .map{ it -> tuple( it.baseName.replace(".fastq", ""), it)}
             
-    barcode_fasta = file(params.barcode_fasta)
+    barcode_fasta = file(params.barcodes)
     arrangement_toml = file(params.arrangement_toml)
 
     DORADO_DEMUX( fq_ch, barcode_fasta, arrangement_toml)
