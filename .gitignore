@@ -1,7 +1,5 @@
 secret
-/work/*
-work
-work/*
-/other
-/other/*
-other
+work/
+other/
+ci_output/
+.nextflow/
