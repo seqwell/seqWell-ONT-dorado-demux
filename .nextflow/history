@@ -1,3 +1,0 @@
-2025-10-07 12:44:55	4.1s	crazy_magritte	ERR	7f858098d124a9d22e8679a17a0b3bc6	e18d0763-486f-4be6-8bda-b010d1afc846	nextflow run main.nf -resume -bg -profile test
-2025-10-07 12:54:49	5s	loving_swirles	ERR	7f858098d124a9d22e8679a17a0b3bc6	e18d0763-486f-4be6-8bda-b010d1afc846	nextflow run main.nf -resume -bg -profile test
-2025-10-07 12:56:42	-	silly_austin	-	7f858098d124a9d22e8679a17a0b3bc6	e18d0763-486f-4be6-8bda-b010d1afc846	nextflow run main.nf -resume -bg -profile test
