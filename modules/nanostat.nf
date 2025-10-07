@@ -1,6 +1,7 @@
 process NANOSTAT {
     tag "$sample_id"
- 
+  
+    errorStrategy 'ignore'
     
     input:
     tuple val(sample_id), path(fastq)
