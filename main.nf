@@ -57,9 +57,6 @@ workflow {
 
             filtered_fq_ch = demuxed_fq_ch
                              .join(valid_ids_ch, by: 0)  
-                             .filter { sample_id, fastq_file, flag ->
-                                fastq_file.size > 0
-                              }
                              .map { sample_id, fastq_file, flag -> tuple(sample_id, fastq_file) }
                              
 
