@@ -1,9 +1,7 @@
-<<<<<<< HEAD
 secret
 work/
 other/
 ci_output/
 .nextflow/
-=======
-secret
->>>>>>> parent of f53e916 (modify main.nf)
+other/*
+.nextflow*
