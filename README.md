@@ -6,7 +6,7 @@
 
 
 
-This Nextflow pipeline demultiplexes 384-well Oxford Nanopore Technologies (ONT) data generated with the seqWell kit using Dorado. It processes Dorado high-accuracy FASTQ files, assigns reads based on customer 384 seqWell barcodes, filters by read length, and produces comprehensive QC reports.
+This Nextflow pipeline demultiplexes 384-well Oxford Nanopore Technologies (ONT) data generated with the seqWell kit using Dorado. It processes Dorado high-accuracy FASTQ files, assigns reads based on custom 384 seqWell barcodes, filters by read length, and produces comprehensive QC reports.
 
 ## Pipeline Overview
 
