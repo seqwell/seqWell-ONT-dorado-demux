@@ -1,8 +1,3 @@
----
-output:
-  word_document: default
-  html_document: default
----
 # seqWell-ONT-dorado-demux
 
 
