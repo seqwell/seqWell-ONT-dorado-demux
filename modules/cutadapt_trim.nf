@@ -1,10 +1,10 @@
 
 process CUTADAPT_TRIM {
     tag "$params.pool_ID"
-    publishDir path: "${params.outdir}/cutadapt_trim/demuxed_fastq", mode: 'copy', pattern: "*seqWell*"
-    publishDir path: "${params.outdir}/cutadapt_trim", mode: 'copy', pattern: "unknown.fastq.gz"
-    publishDir path: "${params.outdir}/cutadapt_trim/other/ME_tagged_fastq", mode: 'copy', pattern: '*tag*'
-    publishDir path: "${params.outdir}/cutadapt_trim/other/cutadapt_report", mode: 'copy', pattern: 'txt'
+    publishDir path: "${params.outdir}/demuxed_fastq", mode: 'copy', pattern: "*seqWell*"
+    publishDir path: "${params.outdir}/demuxed_fastq", mode: 'copy', pattern: "unknown.fastq.gz"
+    publishDir path: "${params.outdir}/other/ME_tagged_fastq", mode: 'copy', pattern: '*tag*'
+  
 
     input:
     tuple val(pair_id), path(fq)
@@ -12,8 +12,7 @@ process CUTADAPT_TRIM {
 
     output:
     path("*.ME.tagged.fastq.gz")
-    path("{*seqWell,unknown,*.ME.tagged}.fastq.gz"),     emit: fq
-    path("*.cutadapt_report*.txt")
+    path("{*seqWell,*.ME.tagged}.fastq.gz"),     emit: fq
     
 
     script:
