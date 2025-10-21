@@ -11,7 +11,7 @@ include { READ_LENGTH }  from './modules/read_length.nf'
 
 workflow {
 
-    fq_ch= Channel.fromPath(params.input)
+    fq_ch= Channel.fromPath(params.input + "/*.fastq.gz")
              .map{ it -> tuple( it.baseName.replace(".fastq", ""), it)}
             
     barcode_fasta = file(params.barcodes)
