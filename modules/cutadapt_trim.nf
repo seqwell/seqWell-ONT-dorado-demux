@@ -13,7 +13,7 @@ process CUTADAPT_TRIM {
     output:
     path("*.ME.tagged.fastq.gz")
     path("{*seqWell,*.ME.tagged}.fastq.gz"),     emit: fq
-    
+
 
     script:
     """
