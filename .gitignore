@@ -7,4 +7,5 @@ other/*
 .nextflow*
 barcode/
 barcode/*
+for_latch
 

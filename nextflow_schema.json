@@ -1,0 +1,82 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/demux_options"
+        }
+    ],
+    "title": "seqWell ONT Dorado Demux",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input & Output Options",
+            "description": "Define the input and output data locations.",
+            "fa_icon": "fas fa-terminal",
+            "properties": {
+                "input": {
+                    "description": "Path to input FASTQ file(s) using glob pattern, e.g. --input \"path/to/fastq_pass/*.fastq.gz\"",
+                    "fa_icon": "fas fa-folder-open",
+                    "type": "string",
+                    "pattern": "^.+/\\*\\.fastq\\.gz$",
+                    "examples": [
+                        "fastq_pass/*.fastq.gz"
+                    ]
+                },
+                "outdir": {
+                    "description": "Output directory.",
+                    "fa_icon": "fas fa-folder-open",
+                    "format": "directory-path",
+                    "type": "string"
+                },
+                "pool_ID": {
+                    "description": "Pool identifier.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "input",
+                "outdir",
+                "pool_ID"
+            ],
+            "type": "object"
+        },
+        "demux_options": {
+            "title": "Demultiplexing Options",
+            "description": "Options for demultiplexing configuration.",
+            "fa_icon": "fas fa-sliders-h",
+            "properties": {
+                "barcodes": {
+                    "description": "Path to barcode file, e.g. --barcodes barcode.fa",
+                    "default": "assets/barcodes.384.fa",
+                    "fa_icon": "fas fa-file",
+                    "format": "file-path",
+                    "type": "string"
+                },
+                "arrangement_toml": {
+                    "description": "Path to arrangement TOML configuration file.",
+                    "default": "assets/arrangement.toml",
+                    "fa_icon": "fas fa-file-alt",
+                    "format": "file-path",
+                    "type": "string"
+                },
+                "length_filter": {
+                    "description": "Minimum read length filter.",
+                    "default": 150,
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "error_rate": {
+                    "description": "Maximum allowed error rate for demultiplexing.",
+                    "default": 0.12,
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "type": "object"
+        }
+    },
+    "type": "object"
+}
