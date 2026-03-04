@@ -1,7 +1,7 @@
 #!/bin/bash
 
 outdir=demux_output
-input=test_data/*.fastq.gz
+input=test_data
 pool_ID=384_test
 
 nextflow run \

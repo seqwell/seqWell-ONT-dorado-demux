@@ -21,7 +21,7 @@ from latch.types.samplesheet_item import SamplesheetItem
 
 @dataclass
 class NextflowSchemaArgsType:
-    input: typing_extensions.Annotated[str, FlyteAnnotation({'display_name': 'Input', 'default': None, 'samplesheet': False, 'output': False, 'required': True, 'description': 'Path to input FASTQ file(s) using glob pattern, e.g. --input "path/to/fastq_pass/*.fastq.gz"'})]
+    input: typing_extensions.Annotated[LatchDir, FlyteAnnotation({'display_name': 'Input', 'default': None, 'samplesheet': False, 'output': False, 'required': True, 'description': 'Path to directory containing FASTQ files'})]
     outdir: typing_extensions.Annotated[LatchDir, FlyteAnnotation({'display_name': 'Outdir', 'default': None, 'samplesheet': False, 'output': True, 'required': True, 'description': 'Output directory.'})]
     pool_ID: typing_extensions.Annotated[str, FlyteAnnotation({'display_name': 'Pool Id', 'default': None, 'samplesheet': False, 'output': False, 'required': True, 'description': 'Pool identifier.'})]
     barcodes: typing_extensions.Annotated[typing.Optional[LatchFile], FlyteAnnotation({'display_name': 'Barcodes', 'default': {'scalar': {'union': {'value': {'scalar': {'blob': {'metadata': {'type': {}}}}}, 'type': {'blob': {}, 'structure': {'tag': 'LatchFilePath'}}}}}, 'samplesheet': False, 'output': False, 'required': False, 'description': 'Path to barcode file, e.g. --barcodes barcode.fa'})] = field(default_factory=lambda: LatchFile('assets/barcodes.384.fa'))

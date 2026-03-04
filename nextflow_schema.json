@@ -16,13 +16,10 @@
             "fa_icon": "fas fa-terminal",
             "properties": {
                 "input": {
-                    "description": "Path to input FASTQ file(s) using glob pattern, e.g. --input \"path/to/fastq_pass/*.fastq.gz\"",
-                    "fa_icon": "fas fa-folder-open",
-                    "type": "string",
-                    "pattern": "^.+/\\*\\.fastq\\.gz$",
-                    "examples": [
-                        "fastq_pass/*.fastq.gz"
-                    ]
+                  "description": "Path to directory containing FASTQ files",
+                  "fa_icon": "fas fa-folder",
+                  "format": "directory-path",
+                  "type": "string"
                 },
                 "outdir": {
                     "description": "Output directory.",
