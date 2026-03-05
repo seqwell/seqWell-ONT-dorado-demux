@@ -21,7 +21,7 @@ class WorkflowArgsType(NextflowSchemaArgsType):
 NextflowMetadata(
     display_name='seqWell ONT Dorado Demux',
     author=LatchAuthor(
-        name="Your Name",
+        name="seqWell",
     ),
     parameters={
         "args": NextflowParameter(type=WorkflowArgsType)

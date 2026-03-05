@@ -9,13 +9,13 @@ from pathlib import Path
 import typing
 import typing_extensions
 
-from latch.resources.workflow import workflow
+from latch.resources.workflow import nextflow_workflow
 from latch.resources.tasks import nextflow_runtime_task, custom_task
 from latch.types.file import LatchFile
-from latch.types.directory import LatchDir
+from latch.types.directory import LatchDir, LatchOutputDir
 from latch.ldata.path import LPath
 from latch.executions import report_nextflow_used_storage
-from latch_cli.nextflow.workflow import get_flag
+from latch_cli.nextflow.workflow import flags_from_args
 from latch_cli.nextflow.utils import _get_execution_name
 from latch_cli.utils import urljoins
 from latch.types import metadata
@@ -25,6 +25,7 @@ from latch_cli.services.register.utils import import_module_by_path
 
 meta = Path("latch_metadata") / "__init__.py"
 import_module_by_path(meta)
+import latch_metadata
 
 @custom_task(cpu=0.25, memory=0.5, storage_gib=1)
 def initialize() -> str:
@@ -39,7 +40,7 @@ def initialize() -> str:
         "http://nf-dispatcher-service.flyte.svc.cluster.local/provision-storage-ofs",
         headers=headers,
         json={
-            "storage_expiration_hours": 0,
+            "storage_expiration_hours": 168,
             "version": 2,
         },
     )
@@ -50,19 +51,21 @@ def initialize() -> str:
 
 
 @nextflow_runtime_task(cpu=4, memory=8, storage_gib=100)
-def nextflow_runtime(
-    pvc_name: str,
-    input: LatchDir,
-    outdir: typing_extensions.Annotated[LatchDir, FlyteAnnotation({"output": True})],
-    pool_ID: str,
-    barcodes: typing.Optional[LatchFile] = None,
-    arrangement_toml: typing.Optional[LatchFile] = None,
-    length_filter: typing.Optional[int] = 150,
-    error_rate: typing.Optional[float] = 0.12,
-) -> None:
+def nextflow_runtime(pvc_name: str, args: latch_metadata.WorkflowArgsType) -> None:
+    root_dir = Path("/root")
     shared_dir = Path("/nf-workdir")
 
-    ignore_list = [
+    exec_name = _get_execution_name()
+    if exec_name is None:
+        print("Failed to get execution name.")
+        exec_name = "unknown"
+
+    latch_log_dir = urljoins("latch:///your_log_dir/nf_seqwell_ont_dorado_demux", exec_name)
+    print(f"Log directory: {latch_log_dir}")
+
+
+
+    to_ignore = {
         "latch",
         ".latch",
         ".git",
@@ -73,22 +76,30 @@ def nextflow_runtime(
         "miniconda",
         "anaconda3",
         "mambaforge",
-    ]
+    }
 
-    shutil.copytree(
-        Path("/root"),
-        shared_dir,
-        ignore=lambda src, names: ignore_list,
-        ignore_dangling_symlinks=True,
-        dirs_exist_ok=True,
-    )
+    for p in root_dir.iterdir():
+        if p.name in to_ignore:
+            continue
 
-    profile_list = ["docker"]
+        src = root_dir / p.name
+        target = shared_dir / p.name
 
+        if p.is_dir():
+            shutil.copytree(
+                src,
+                target,
+                ignore_dangling_symlinks=True,
+                dirs_exist_ok=True,
+            )
+        else:
+            shutil.copy2(src, target)
+
+    profile_list = ['docker']
     if len(profile_list) == 0:
         profile_list.append("standard")
 
-    profiles = ",".join(profile_list)
+    profiles = ','.join(profile_list)
 
     cmd = [
         "/root/nextflow",
@@ -101,17 +112,11 @@ def nextflow_runtime(
         "-c",
         "latch.config",
         "-resume",
-        *get_flag("input", input),
-        *get_flag("outdir", outdir),
-        *get_flag("pool_ID", pool_ID),
-        *get_flag("barcodes", barcodes),
-        *get_flag("arrangement_toml", arrangement_toml),
-        *get_flag("length_filter", length_filter),
-        *get_flag("error_rate", error_rate),
+        *flags_from_args(args, shared_dir),
     ]
 
     print("Launching Nextflow Runtime")
-    print(" ".join(cmd))
+    print(' '.join(cmd))
     print(flush=True)
 
     failed = False
@@ -123,7 +128,12 @@ def nextflow_runtime(
             "NXF_OPTS": "-Xms1536M -Xmx6144M -XX:ActiveProcessorCount=4",
             "NXF_DISABLE_CHECK_LATEST": "true",
             "NXF_ENABLE_VIRTUAL_THREADS": "false",
+            "NXF_ENABLE_FS_SYNC": "true",
         }
+
+        if False:
+            env["LATCH_LOG_DIR"] = latch_log_dir
+
         subprocess.run(
             cmd,
             env=env,
@@ -137,38 +147,26 @@ def nextflow_runtime(
 
         nextflow_log = shared_dir / ".nextflow.log"
         if nextflow_log.exists():
-            name = _get_execution_name()
-            if name is None:
-                print("Skipping logs upload, failed to get execution name")
-            else:
-                remote = LPath(
-                    urljoins(
-                        "latch:///your_log_dir/nf_seqwell_ont_dorado_demux",
-                        name,
-                        "nextflow.log",
-                    )
-                )
-                print(f"Uploading .nextflow.log to {remote.path}")
-                remote.upload_from(nextflow_log)
+            remote = LPath(urljoins(latch_log_dir, "nextflow.log"))
+            print(f"Uploading .nextflow.log to {remote.path}")
+            remote.upload_from(nextflow_log)
 
         print("Computing size of workdir... ", end="")
         try:
             result = subprocess.run(
-                ["du", "-sb", str(shared_dir)],
+                ['du', '-sb', str(shared_dir)],
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                timeout=5 * 60,
+                timeout=5 * 60
             )
 
             size = int(result.stdout.split()[0])
             report_nextflow_used_storage(size)
             print(f"Done. Workdir size: {size / 1024 / 1024 / 1024: .2f} GiB")
         except subprocess.TimeoutExpired:
-            print(
-                "Failed to compute storage size: Operation timed out after 5 minutes."
-            )
+            print("Failed to compute storage size: Operation timed out after 5 minutes.")
         except subprocess.CalledProcessError as e:
             print(f"Failed to compute storage size: {e.stderr}")
         except Exception as e:
@@ -178,16 +176,8 @@ def nextflow_runtime(
         sys.exit(1)
 
 
-@workflow(metadata._nextflow_metadata)
-def nf_seqwell_ont_dorado_demux(
-    input: LatchDir,
-    outdir: typing_extensions.Annotated[LatchDir, FlyteAnnotation({"output": True})],
-    pool_ID: str,
-    barcodes: typing.Optional[LatchFile] = None,
-    arrangement_toml: typing.Optional[LatchFile] = None,
-    length_filter: typing.Optional[int] = 150,
-    error_rate: typing.Optional[float] = 0.12,
-) -> None:
+@nextflow_workflow(metadata._nextflow_metadata)
+def nf_seqwell_ont_dorado_demux(args: latch_metadata.WorkflowArgsType) -> None:
     """
     seqWell ONT Dorado Demux
 
@@ -195,14 +185,5 @@ def nf_seqwell_ont_dorado_demux(
     """
 
     pvc_name: str = initialize()
-    nextflow_runtime(
-        pvc_name=pvc_name,
-        input=input,
-        outdir=outdir,
-        pool_ID=pool_ID,
-        barcodes=barcodes,
-        arrangement_toml=arrangement_toml,
-        length_filter=length_filter,
-        error_rate=error_rate,
-    )
+    nextflow_runtime(pvc_name=pvc_name, args=args)
 
