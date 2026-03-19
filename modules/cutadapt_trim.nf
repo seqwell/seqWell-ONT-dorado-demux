@@ -1,6 +1,6 @@
 
 process CUTADAPT_TRIM {
-    tag "$params.pool_ID"
+    tag "${pair_id}"
     publishDir path: "${params.outdir}/demuxed_fastq", mode: 'copy', pattern: "*seqWell*"
     publishDir path: "${params.outdir}/demuxed_fastq", mode: 'copy', pattern: "unknown.fastq.gz"
     publishDir path: "${params.outdir}/other/ME_tagged_fastq", mode: 'copy', pattern: '*tag*'

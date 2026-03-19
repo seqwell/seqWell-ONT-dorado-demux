@@ -19,8 +19,7 @@ workflow {
 
     DORADO_DEMUX( fq_ch, barcode_fasta, arrangement_toml)
 
-    combined_fq_ch = COMBINE_BARCODES(DORADO_DEMUX.out.collect())    
-    combined_fq_ch.flatten().view()
+    combined_fq_ch = COMBINE_BARCODES(DORADO_DEMUX.out.collect())   
 
 
     fq_ch = combined_fq_ch.flatten()
@@ -38,29 +37,18 @@ workflow {
 
     // Read in the demux summary report and create individual valid ID tuples, only do nanostat on those apprered in the report
     valid_ids_ch = DEMUX_SUMMARIZE.out
-                 .map { report ->
-                    def ids = []
-                    report.eachLine { line ->
-                      if (line.startsWith("barcode")) {
-                        def id = line.split(",")[0].trim()
-                        ids << id
-                      }
-                    if (line.startsWith("unknown")) {
-                     ids << "unknown"
-                      }
-                    }
-                   return ids
-                   }
-                 .flatten()  
-                 .map { id -> tuple(id, true) }  
+                  .splitCsv()
+                  .filter { row -> 
+                   row[0].startsWith("barcode") || row[0] == "unknown"
+                        }
+                   .map { row -> tuple(row[0].trim(), true) } 
 
 
-            filtered_fq_ch = demuxed_fq_ch
-                             .join(valid_ids_ch, by: 0)  
-                             .map { sample_id, fastq_file, flag -> tuple(sample_id, fastq_file) }
+     filtered_fq_ch = demuxed_fq_ch
+                     .join(valid_ids_ch, by: 0)  
+                     .map { sample_id, fastq_file, flag -> tuple(sample_id, fastq_file) }
                              
 
-            filtered_fq_ch.view { "Filtered: $it" }
 
       READ_LENGTH (filtered_fq_ch)
       NANOSTAT(filtered_fq_ch)

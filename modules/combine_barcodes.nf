@@ -1,6 +1,6 @@
 process COMBINE_BARCODES {
 tag "combine_barcodes"
-container 'ubuntu:22.04'
+
 
 //publishDir "${params.outdir}/merged_fastq", mode: 'copy'
 
