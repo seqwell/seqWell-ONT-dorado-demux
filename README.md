@@ -22,7 +22,8 @@ The pipeline processes ONT sequencing data through the following key steps:
 
 
 
-![384-well seqWell Dorado demux ONT data Workflow](assets/dorado_ont_workflow.png)
+<img src="assets/dorado_ont_workflow.png" alt="384-well seqWell Dorado demux ONT data Workflow" width="50%">
+
 
 
 
