@@ -1,6 +1,6 @@
 process EXTRACT_HEADER {
     tag "$sample_id"
-    publishDir "${params.outdir}/header_tags", mode: 'copy'
+    //publishDir "${params.outdir}/header_tags", mode: 'copy'
 
     input:
     tuple val(sample_id), path(fastq)

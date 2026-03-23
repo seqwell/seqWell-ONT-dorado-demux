@@ -12,7 +12,7 @@ This Nextflow pipeline demultiplexes 384-well Oxford Nanopore Technologies (ONT)
 
 The pipeline processes ONT sequencing data through the following key steps:
 
-1. **EXTRACT_HEADER**: Extracts read UUID and metadata tags (`runid, ch, start_time, flow_cell_id, protocol_group_id, sample_id, basecall_model_version_id`) from raw input FASTQs into a UUID-keyed TSV lookup table.
+1. **EXTRACT_HEADER**: Extracts read UUID and metadata tags (`runid, ch, start_time, flow_cell_id, protocol_group_id, sample_id, parent_read_id, basecall_model_version_id`) from raw input FASTQs into a UUID-keyed TSV lookup table.
 2. **DORADO_DEMUX**: Performs initial demultiplexing using dorado with custom 384 seqWell barcode sequences and arrangement configuration
 3. **COMBINE_BARCODES**: Merges demultiplexed FASTQ files from the same barcode across multiple dorado demuxed FASTQ files
 4. **REHEADER_READS**: Restores the original ONT read header metadata to each combined per-barcode FASTQ by joining on read UUID against the TSV built by **EXTRACT_HEADER**. 
@@ -24,7 +24,7 @@ The pipeline processes ONT sequencing data through the following key steps:
 
 
 
-<img src="assets/dorado_ont_workflow.png" alt="384-well seqWell Dorado demux ONT data Workflow" width="50%">
+<img src="assets/dorado_ont_workflow.png" alt="384-well seqWell Dorado demux ONT data Workflow" width="70%">
 
 
 

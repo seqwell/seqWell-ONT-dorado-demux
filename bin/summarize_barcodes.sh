@@ -94,7 +94,7 @@ other_barcodes_pct=$(awk -v o="$other_barcodes_reads" -v t="$total_reads" 'BEGIN
 {
     echo "Total Reads:,${total_reads}"
     echo "Total Demuxed Reads:,${regular_barcoded_reads},${regular_barcoded_pct}%"
-    echo "ME-tagged Reads (demuxed reads, removed):,${me_tagged_reads},${me_tagged_pct}%"
+    echo "ME-tagged Reads (demuxed reads: removed):,${me_tagged_reads},${me_tagged_pct}%"
     echo "Unclassified Reads No ME-tagged:,${unknown_reads},${unknown_pct}%"
     echo "Unclassified ME-tagged Reads:,${unclassified_me_tagged_reads},${unclassified_me_pct}%"
     echo "Other Barcodes (count < 10% of avg):,${other_barcodes_reads},${other_barcodes_pct}%"
