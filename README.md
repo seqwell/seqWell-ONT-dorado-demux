@@ -12,13 +12,15 @@ This Nextflow pipeline demultiplexes 384-well Oxford Nanopore Technologies (ONT)
 
 The pipeline processes ONT sequencing data through the following key steps:
 
-1. **DORADO_DEMUX**: Performs initial demultiplexing using dorado with custom 384 seqWell barcode sequences and arrangement configuration
-2. **COMBINE_BARCODES**: Merges demultiplexed FASTQ files from the same barcode across multiple dorado demuxed FASTQ files
-3. **CUTADAPT_TRIM**: Performs read length filtering and adapter trimming (ME mosaic end, if any) with cutadapt
-4. **DEMUX_SUMMARIZE**: Generates comprehensive summary statistics and reports from the demultiplexing results
-5. **READ_LENGTH**: Calculates read length distributions from the demultiplexed FASTQ files
-6. **NANOSTAT**: Produces detailed per-sample sequencing statistics from the demultiplexed FASTQ files
-7. **MULTIQC**: Aggregates results from NanoStat into a single interactive HTML report
+1. **EXTRACT_HEADER**: Extracts read UUID and metadata tags (`runid, ch, start_time, flow_cell_id, protocol_group_id, sample_id, basecall_model_version_id`) from raw input FASTQs into a UUID-keyed TSV lookup table.
+2. **DORADO_DEMUX**: Performs initial demultiplexing using dorado with custom 384 seqWell barcode sequences and arrangement configuration
+3. **COMBINE_BARCODES**: Merges demultiplexed FASTQ files from the same barcode across multiple dorado demuxed FASTQ files
+4. **REHEADER_READS**: Restores the original ONT read header metadata to each combined per-barcode FASTQ by joining on read UUID against the TSV built by **EXTRACT_HEADER**. 
+5. **CUTADAPT_TRIM**: Performs read length filtering and adapter trimming (ME mosaic end, if any) with cutadapt
+6. **DEMUX_SUMMARIZE**: Generates comprehensive summary statistics and reports from the demultiplexing results
+7. **READ_LENGTH**: Calculates read length distributions from the demultiplexed FASTQ files
+8. **NANOSTAT**: Produces detailed per-sample sequencing statistics from the demultiplexed FASTQ files
+9. **MULTIQC**: Aggregates results from NanoStat into a single interactive HTML report
 
 
 
@@ -46,6 +48,9 @@ All docker containers used in this pipeline are publicly available:
 - **READ_LENGTH**: `seqwell/python:v2.0`
 - **NANOSTAT**: `quay.io/biocontainers/nanostat:1.6.0--pyhdfd78af_0`
 - **MULTIQC**: `quay.io/biocontainers/multiqc:1.25.1--pyhdfd78af_0`
+- **EXTRACT_HEADER**: `ubuntu:20.04`
+- **REHEADER_READS**: `seqwell/python:v2.0`
+
 
 ## How to Run the Pipeline
 
@@ -72,8 +77,10 @@ Path to the TOML configuration file defining the barcode arrangement for Dorado 
 
 Several profiles are available and can be selected with the `-profile` option at the command line. The default profile is `docker`.
 
-- **docker**: Run pipeline using Docker containers (default)
+- **test**: Run pipeline using test data.
+- **docker**: Run pipeline using Docker containers (default). No need to specify **-profile docker**, as this is the default profile.
 - **awsbatch**: Run pipeline on AWS Batch
+
 
 ### Example Command
 

@@ -1,0 +1,58 @@
+digraph workflow {
+  rankdir=TB
+  graph [splines=line, nodesep=1.0, ranksep=0.8]
+  node [fontname="Arial", fontsize=13]
+
+  // Input files
+  FASTQ_Input      [label="FASTQ Input",      shape=note, style=filled, fillcolor="#D0D0D0", color="#555555"]
+  Barcode_FASTA    [label="Barcode FASTA",    shape=note, style=filled, fillcolor="#D0D0D0", color="#555555"]
+  Arrangement_File [label="Arrangement File", shape=note, style=filled, fillcolor="#D0D0D0", color="#555555"]
+
+  // Header branch
+  EXTRACT_HEADER   [label="EXTRACT_HEADER",          shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  merged_tags      [label="merged_tags\n(collected)", shape=ellipse,   style=filled,          fillcolor="#D0D0D0", color="#555555"]
+
+  // Main spine
+  DORADO_DEMUX     [label="DORADO_DEMUX",     shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  COMBINE_BARCODES [label="COMBINE_BARCODES", shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  REHEADER_READS   [label="REHEADER_READS",   shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  CUTADAPT_TRIM    [label="CUTADAPT_TRIM",    shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+
+  // Blue file node
+  filtered_fq_ch   [label="Trimmed FASTQ Files\n(filtered_fq_ch)", shape=note, style=filled, fillcolor="#ADD8E6", color="#555555"]
+
+  // Bottom three — same rank to sit side by side
+  READ_LENGTH      [label="READ_LENGTH",     shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  NANOSTAT         [label="NANOSTAT",        shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  DEMUX_SUMMARIZE  [label="DEMUX_SUMMARIZE", shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+
+  MULTIQC          [label="MULTIQC",         shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+
+  // Keep bottom three on same horizontal row
+  { rank=same; READ_LENGTH; NANOSTAT; DEMUX_SUMMARIZE }
+
+  // Force MULTIQC to the very bottom
+  { rank=sink; MULTIQC }
+
+  // Header branch edges (left side)
+  FASTQ_Input      -> EXTRACT_HEADER
+  EXTRACT_HEADER   -> merged_tags
+  merged_tags      -> REHEADER_READS
+
+  // Main spine edges
+  FASTQ_Input      -> DORADO_DEMUX
+  Barcode_FASTA    -> DORADO_DEMUX
+  Arrangement_File -> DORADO_DEMUX
+  DORADO_DEMUX     -> COMBINE_BARCODES
+  COMBINE_BARCODES -> REHEADER_READS
+  REHEADER_READS   -> CUTADAPT_TRIM
+  CUTADAPT_TRIM    -> filtered_fq_ch
+
+  // Fan-out from blue node — matches original layout
+  filtered_fq_ch   -> READ_LENGTH
+  filtered_fq_ch   -> NANOSTAT
+  filtered_fq_ch   -> DEMUX_SUMMARIZE
+
+  // Final QC
+  NANOSTAT         -> MULTIQC
+}
