@@ -1,7 +1,7 @@
 #!/bin/bash
 
 outdir=demux_output
-input=test_data
+input=test_data/fastq_pass
 pool_ID=384_test
 
 nextflow run \
