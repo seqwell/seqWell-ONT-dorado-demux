@@ -78,8 +78,11 @@ Path to the TOML configuration file defining the barcode arrangement for Dorado 
 Several profiles are available and can be selected with the `-profile` option at the command line. The default profile is `docker`.
 
 - **test**: Run pipeline using test data.
-- **docker**: Run pipeline using Docker containers (default). No need to specify **-profile docker**, as this is the default profile.
+- **docker**: Run pipeline using Docker containers. 
+- **standard** (Default): Runs the pipeline locally using Docker. This is the default if no profile is specified.
 - **awsbatch**: Run pipeline on AWS Batch
+
+
 
 
 ### Example Command
@@ -89,6 +92,7 @@ A minimal execution might look like:
 ```bash
 nextflow run \
     main.nf \
+    -profile docker \
     --input "${PWD}/path/to/fastq/directory" \
     --outdir "${PWD}/path/to/output" \
     --pool_ID "test" \
@@ -102,6 +106,7 @@ The pipeline can be run using test data with:
 ```bash
 nextflow run \
     main.nf \
+    -profile test \
     --input "${PWD}/test_data/fastq_pass" \
     --outdir "${PWD}/test_output" \
     --pool_ID "384_test" \
