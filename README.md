@@ -71,11 +71,11 @@ A unique identifier for the ONT sequencing run being demultiplexed.
 Path to the barcode FASTA file used for Dorado demultiplexing. The default barcode file (**barcodes.384.fa**) is located in the `assets` folder.
 
 #### `--arrangement_toml`
-Path to the TOML configuration file defining the barcode arrangement for Dorado demultiplexing. The default arrangement file (**arrangement.toml**) is located in the assets directory.
+Path to the TOML configuration file defining the barcode arrangement for Dorado demultiplexing. The default arrangement file (**arrangement.toml**) is located in the `assets` folder.
 
 ### Profiles
 
-Several profiles are available and can be selected with the `-profile` option at the command line. The default profile is `docker`.
+Several profiles are available and can be selected with the `-profile` option at the command line. 
 
 - **test**: Run pipeline using test data.
 - **docker**: Run pipeline using Docker containers. 
@@ -117,12 +117,23 @@ nextflow run \
 
 ```
 output_directory/
-├── demuxed_fastq
-│   ├── barcode001.seqWell.fastq.gz                         # Final demuxed reads after dorado and cutadapt
+├──demuxed_fastq                                            # demuxed reads after dorado and cutadapt in Nanopore like output structure with subdirectories
+|   ├── barcode001
+│       └── barcode001.seqWell.fastq.gz
+|.  ├── barcode002
+│       └── barcode002.seqWell.fastq.gz
+|.  ├── barcode003
+│       └── barcode003.seqWell.fastq.gz
+|   ├── ...
+|.  ├── unclassified
+│       └──unclassified.seqWell.fastq.gz
+├── demuxed_fastq_flat
+│   ├── barcode001.seqWell.fastq.gz                         # demuxed reads after dorado and cutadapt in a flat structure
 │   ├── barcode002.seqWell.fastq.gz
 │   ├── barcode003.seqWell.fastq.gz
 │   ├── ...
 │   └── unclassified.seqWell.fastq.gz                       # Unassigned reads
+├── barcode008
 ├── demux_summary/
 │   └── demux_report.csv                                    # Demux summary report
 ├── read_length/
