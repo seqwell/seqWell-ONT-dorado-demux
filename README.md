@@ -120,12 +120,12 @@ output_directory/
 ├──demuxed_fastq                                            # demuxed reads after dorado and cutadapt in Nanopore like output structure with subdirectories
 |   ├── barcode001
 │       └── barcode001.seqWell.fastq.gz
-|.  ├── barcode002
+|   ├── barcode002
 │       └── barcode002.seqWell.fastq.gz
-|.  ├── barcode003
+|   ├── barcode003
 │       └── barcode003.seqWell.fastq.gz
 |   ├── ...
-|.  ├── unclassified
+|   ├── unclassified
 │       └──unclassified.seqWell.fastq.gz
 ├── demuxed_fastq_flat
 │   ├── barcode001.seqWell.fastq.gz                         # demuxed reads after dorado and cutadapt in a flat structure
