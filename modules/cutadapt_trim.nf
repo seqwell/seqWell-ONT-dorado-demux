@@ -1,7 +1,12 @@
 
 process CUTADAPT_TRIM {
     tag "${pair_id}"
-    publishDir path: "${params.outdir}/demuxed_fastq", mode: 'copy', pattern: "*seqWell*"
+    publishDir path: "${params.outdir}/demuxed_fastq_flat/", mode: 'copy', pattern: "*seqWell*"
+    publishDir path: "${params.outdir}/demuxed_fastq/", mode: 'copy', saveAs: { filename ->
+        if (filename.contains("seqWell")) "${pair_id}/${filename}"
+        else if (filename == "unknown.fastq.gz") filename
+        else null
+    }
     publishDir path: "${params.outdir}/demuxed_fastq", mode: 'copy', pattern: "unknown.fastq.gz"
     publishDir path: "${params.outdir}/other/ME_tagged_fastq", mode: 'copy', pattern: '*tag*'
   
