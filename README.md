@@ -133,7 +133,6 @@ output_directory/
 │   ├── barcode003.seqWell.fastq.gz
 │   ├── ...
 │   └── unclassified.seqWell.fastq.gz                       # Unassigned reads
-├── barcode008
 ├── demux_summary/
 │   └── demux_report.csv                                    # Demux summary report
 ├── read_length/
