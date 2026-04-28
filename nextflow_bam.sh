@@ -1,8 +1,8 @@
 #!/bin/bash
 
-outdir=bam_output_20260422
-input=s3://seqwell-ont/20260422/bam_pass/
-pool_ID=20260422
+outdir=bam_output_20260424
+input=s3://seqwell-ont/20260424/bam_pass/
+pool_ID=20260424
 data_type=bam   # 'bam' or 'fastq'
 
 /software/nextflow-align/nextflow run \

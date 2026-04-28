@@ -1,58 +1,67 @@
 digraph workflow {
   rankdir=TB
-  graph [splines=line, nodesep=1.0, ranksep=0.8]
-  node [fontname="Arial", fontsize=13]
+  splines=ortho
+  nodesep=0.7
+  ranksep=0.9
 
-  // Input files
-  FASTQ_Input      [label="FASTQ Input",      shape=note, style=filled, fillcolor="#D0D0D0", color="#555555"]
-  Barcode_FASTA    [label="Barcode FASTA",    shape=note, style=filled, fillcolor="#D0D0D0", color="#555555"]
-  Arrangement_File [label="Arrangement File", shape=note, style=filled, fillcolor="#D0D0D0", color="#555555"]
+  node [fontname="Arial", fontsize=12, shape=rectangle, style="rounded,filled", fillcolor="#F5F5F5"]
 
-  // Header branch
-  EXTRACT_HEADER   [label="EXTRACT_HEADER",          shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
-  merged_tags      [label="merged_tags\n(collected)", shape=ellipse,   style=filled,          fillcolor="#D0D0D0", color="#555555"]
+  INPUT_BAM      [label="BAM Input",        shape=note, fillcolor="#90EE90"]
+  INPUT_FASTQ    [label="FASTQ Input",      shape=note, fillcolor="#90EE90"]
+  BARCODES       [label="Barcode FASTA",    shape=note, fillcolor="#D0D0D0"]
+  ARRANGEMENT    [label="Arrangement TOML", shape=note, fillcolor="#D0D0D0"]
 
-  // Main spine
-  DORADO_DEMUX     [label="DORADO_DEMUX",     shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
-  COMBINE_BARCODES [label="COMBINE_BARCODES", shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
-  REHEADER_READS   [label="REHEADER_READS",   shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
-  CUTADAPT_TRIM    [label="CUTADAPT_TRIM",    shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  DUMMY [style=invis, width=0, height=0, label=""]
 
-  // Blue file node
-  filtered_fq_ch   [label="Trimmed FASTQ Files\n(filtered_fq_ch)", shape=note, style=filled, fillcolor="#ADD8E6", color="#555555"]
+  DORADO_BAM     [label="DORADO_DEMUX (no-emit-fastq)"]
+  COMBINE_BAM    [label="COMBINE_BARCODES_BAM"]
+  BAM_TO_FASTQ   [label="BAM_TO_FASTQ"]
+  CUTADAPT_BAM   [label="CUTADAPT_TRIM"]
+  FILTER_BAM     [label="FILTER_BAM_BY_FASTQ"]
 
-  // Bottom three — same rank to sit side by side
-  READ_LENGTH      [label="READ_LENGTH",     shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
-  NANOSTAT         [label="NANOSTAT",        shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
-  DEMUX_SUMMARIZE  [label="DEMUX_SUMMARIZE", shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  EXTRACT_HEADER [label="EXTRACT_HEADER"]
+  DORADO_FASTQ   [label="DORADO_DEMUX (emit-fastq)"]
+  COMBINE_FASTQ  [label="COMBINE_BARCODES"]
+  REHEADER       [label="REHEADER_READS"]
+  CUTADAPT_FASTQ [label="CUTADAPT_TRIM"]
 
-  MULTIQC          [label="MULTIQC",         shape=rectangle, style="rounded,filled", fillcolor="white", color="#555555"]
+  TRIMMED_FQ     [label="Trimmed FASTQ", shape=note, fillcolor="#ADD8E6"]
 
-  // Keep bottom three on same horizontal row
-  { rank=same; READ_LENGTH; NANOSTAT; DEMUX_SUMMARIZE }
+  DEMUX_SUMMARIZE [label="DEMUX_SUMMARIZE"]
+  READ_LENGTH     [label="READ_LENGTH"]
+  NANOSTAT        [label="NANOSTAT"]
+  MULTIQC         [label="MULTIQC"]
 
-  // Force MULTIQC to the very bottom
-  { rank=sink; MULTIQC }
+  { rank=same; INPUT_BAM; INPUT_FASTQ }
+  { rank=same; DUMMY; EXTRACT_HEADER }
+  { rank=same; DORADO_BAM; DORADO_FASTQ }
+  { rank=same; COMBINE_BAM; COMBINE_FASTQ }
+  { rank=same; BAM_TO_FASTQ; REHEADER }
+  { rank=same; CUTADAPT_BAM; CUTADAPT_FASTQ }
+  { rank=same; DEMUX_SUMMARIZE; READ_LENGTH; NANOSTAT; MULTIQC }
 
-  // Header branch edges (left side)
-  FASTQ_Input      -> EXTRACT_HEADER
-  EXTRACT_HEADER   -> merged_tags
-  merged_tags      -> REHEADER_READS
+  INPUT_BAM      -> DUMMY      [style=invis]
+  DUMMY          -> DORADO_BAM [style=invis]
+  INPUT_BAM      -> DORADO_BAM
+  BARCODES       -> DORADO_BAM
+  ARRANGEMENT    -> DORADO_BAM
+  DORADO_BAM     -> COMBINE_BAM
+  COMBINE_BAM    -> BAM_TO_FASTQ
+  BAM_TO_FASTQ   -> CUTADAPT_BAM
+  CUTADAPT_BAM   -> FILTER_BAM
+  FILTER_BAM     -> TRIMMED_FQ
 
-  // Main spine edges
-  FASTQ_Input      -> DORADO_DEMUX
-  Barcode_FASTA    -> DORADO_DEMUX
-  Arrangement_File -> DORADO_DEMUX
-  DORADO_DEMUX     -> COMBINE_BARCODES
-  COMBINE_BARCODES -> REHEADER_READS
-  REHEADER_READS   -> CUTADAPT_TRIM
-  CUTADAPT_TRIM    -> filtered_fq_ch
+  INPUT_FASTQ    -> EXTRACT_HEADER
+  EXTRACT_HEADER -> DORADO_FASTQ
+  BARCODES       -> DORADO_FASTQ
+  ARRANGEMENT    -> DORADO_FASTQ
+  DORADO_FASTQ   -> COMBINE_FASTQ
+  COMBINE_FASTQ  -> REHEADER
+  REHEADER       -> CUTADAPT_FASTQ
+  CUTADAPT_FASTQ -> TRIMMED_FQ
 
-  // Fan-out from blue node — matches original layout
-  filtered_fq_ch   -> READ_LENGTH
-  filtered_fq_ch   -> NANOSTAT
-  filtered_fq_ch   -> DEMUX_SUMMARIZE
-
-  // Final QC
-  NANOSTAT         -> MULTIQC
+  TRIMMED_FQ -> DEMUX_SUMMARIZE
+  TRIMMED_FQ -> READ_LENGTH
+  TRIMMED_FQ -> NANOSTAT
+  NANOSTAT   -> MULTIQC
 }

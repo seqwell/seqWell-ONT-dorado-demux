@@ -1,0 +1,38 @@
+latch generate-metadata nextflow_schema.json --nextflow
+
+
+latch cp assets/arrangement.toml latch:///ont_data/
+latch:///ont_data/arrangement.toml	
+latch:///ont_data/barcodes.384.fa	
+
+latch.config
+
+```
+process {
+    executor = 'k8s'
+}
+
+k8s {
+    runAsUser = 0
+}
+
+aws {
+    client {
+        anonymous = true
+    }
+}
+
+
+```
+
+
+
+the nextflow.config has to has docker as default
+latch login
+#first time to create wf folder
+latch register . --yes --nf-script main.nf --nf-execution-profile docker
+
+latch register .
+
+
+

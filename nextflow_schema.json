@@ -16,19 +16,19 @@
             "fa_icon": "fas fa-terminal",
             "properties": {
                 "input": {
-                  "description": "Path to directory containing FASTQ files",
-                  "fa_icon": "fas fa-folder",
-                  "format": "directory-path",
-                  "type": "string"
+                    "description": "Path to directory containing input files (*.bam or *.fastq.gz). Supports local paths and AWS S3 URIs.",
+                    "fa_icon": "fas fa-folder",
+                    "format": "directory-path",
+                    "type": "string"
                 },
                 "outdir": {
-                    "description": "Output directory.",
+                    "description": "Output directory. Supports local paths and AWS S3 URIs.",
                     "fa_icon": "fas fa-folder-open",
                     "format": "directory-path",
                     "type": "string"
                 },
                 "pool_ID": {
-                    "description": "Pool identifier.",
+                    "description": "Unique identifier for the sequencing run. Used in the demux summary report filename.",
                     "type": "string"
                 }
             },
@@ -44,34 +44,46 @@
             "description": "Options for demultiplexing configuration.",
             "fa_icon": "fas fa-sliders-h",
             "properties": {
+                "data_type": {
+                    "description": "Input file format. Must be 'bam' or 'fastq'. BAM input produces FASTQ and filtered BAM outputs; FASTQ input produces FASTQ outputs only.",
+                    "fa_icon": "fas fa-file-code",
+                    "type": "string",
+                    "enum": [
+                        "bam",
+                        "fastq"
+                    ]
+                },
                 "barcodes": {
-                    "description": "Path to barcode file, e.g. --barcodes barcode.fa",
+                    "description": "Path to the barcode FASTA file.",
                     "default": "assets/barcodes.384.fa",
                     "fa_icon": "fas fa-file",
                     "format": "file-path",
                     "type": "string"
                 },
                 "arrangement_toml": {
-                    "description": "Path to arrangement TOML configuration file.",
+                    "description": "Path to the barcode arrangement TOML configuration file for Dorado.",
                     "default": "assets/arrangement.toml",
                     "fa_icon": "fas fa-file-alt",
                     "format": "file-path",
                     "type": "string"
                 },
                 "length_filter": {
-                    "description": "Minimum read length filter.",
+                    "description": "Minimum read length (bp) to retain after trimming.",
                     "default": 150,
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 50
                 },
                 "error_rate": {
-                    "description": "Maximum allowed error rate for demultiplexing.",
+                    "description": "Error rate threshold used by CUTADAPT_TRIM to filter reads with residual ME adapter sequence.",
                     "default": 0.12,
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1
                 }
             },
+            "required": [
+                "data_type"
+            ],
             "type": "object"
         }
     },

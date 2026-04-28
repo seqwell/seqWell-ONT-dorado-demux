@@ -19,8 +19,9 @@ def build_lookup(tsv_files):
                 line = line.rstrip()
                 if not line:
                     continue
-                uuid, tags = line.split("\t", 1)
-                lookup[uuid] = tags
+                parts = line.split("\t", 1)
+                if len(parts) == 2:
+                    lookup[parts[0]] = parts[1]
     print(f"[reheader_reads] Loaded {len(lookup)} UUID entries from {len(tsv_files)} TSV(s)",
           file=sys.stderr)
     return lookup
@@ -30,18 +31,46 @@ def reheader(fastq_in, fastq_out, lookup):
     total   = 0
     with gzip.open(fastq_in, "rt") as inp, \
          gzip.open(fastq_out, "wt") as out:
-        for line in inp:
-            if line.startswith("@"):
-                total += 1
-                uuid  = line[1:].split()[0].rstrip()
-                extra = lookup.get(uuid)
-                if extra:
-                    out.write(f"@{uuid}{extra}\n")
-                else:
-                    missing += 1
-                    out.write(line)
+        while True:
+            # Read exactly 4 lines per FASTQ record — avoids misidentifying
+            # quality score lines that start with '@' as header lines
+            header   = inp.readline()
+            if not header:
+                break           # EOF
+            seq      = inp.readline()
+            plus     = inp.readline()
+            qual     = inp.readline()
+
+            if not header.startswith("@"):
+                print(f"[reheader_reads] WARNING: unexpected header line: {header.rstrip()}",
+                      file=sys.stderr)
+                continue
+
+            header_body = header[1:].rstrip("\n")
+            parts = header_body.split(None, 1)   # split on first whitespace only
+            uuid  = parts[0] if parts else ""
+
+            if not uuid:
+                # Empty header — write as-is and continue
+                out.write(header)
+                out.write(seq)
+                out.write(plus)
+                out.write(qual)
+                continue
+
+            total += 1
+            extra  = lookup.get(uuid)
+
+            if extra:
+                out.write(f"@{uuid}{extra}\n")
             else:
-                out.write(line)
+                missing += 1
+                out.write(header)
+
+            out.write(seq)
+            out.write(plus)
+            out.write(qual)
+
     if missing:
         print(f"[reheader_reads] WARNING: {missing}/{total} reads had no tag match",
               file=sys.stderr)

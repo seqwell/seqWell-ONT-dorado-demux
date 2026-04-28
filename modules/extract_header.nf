@@ -1,20 +1,25 @@
+/*
+ * EXTRACT_HEADER
+ *
+ * For FASTQ-input runs only.
+ * Extracts header fields from the input FASTQ and writes them to a TSV
+ * (uuid_tags.tsv) so that REHEADER_READS can restore the original header
+ * tags after dorado demux strips them.
+ *
+ * Not used for BAM input — BAM aux tags are preserved end-to-end in the
+ * demuxed BAM, and no header extraction step is required.
+ */
 process EXTRACT_HEADER {
     tag "$sample_id"
-    //publishDir "${params.outdir}/header_tags", mode: 'copy'
 
     input:
-    tuple val(sample_id), path(fastq)
+    tuple val(sample_id), path(input_file)
 
     output:
     path "${sample_id}.uuid_tags.tsv"
 
     script:
     """
-    zcat ${fastq} | awk 'NR%4==1 {
-        uuid = substr(\$1, 2)
-        tags = ""
-        for (i=2; i<=NF; i++) tags = tags " " \$i
-        print uuid "\\t" tags
-    }' > ${sample_id}.uuid_tags.tsv
+    extract_fastq_tags.py ${input_file} ${sample_id}.uuid_tags.tsv
     """
 }
