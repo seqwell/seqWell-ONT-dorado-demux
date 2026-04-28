@@ -163,7 +163,7 @@ Error rate threshold used to filter out reads with ME in **CUTADAPT_TRIM**. Defa
 |---|---|
 | `standard` | Default. Runs locally with Docker. |
 | `docker` | Explicit local Docker run. |
-| `test` | Runs with built-in test data (`data_type=fastq`). |
+| `test` | Runs with built-in test data (`data_type=bam`). |
 | `awsbatch` | Runs on AWS Batch. |
 
 ### Example Commands
