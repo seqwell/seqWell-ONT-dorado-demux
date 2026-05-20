@@ -8,6 +8,7 @@ bam_test_output/
 ci_output/
 barcode/
 other/
+temp_test/
 
 # Latch
 files_for_latch/
