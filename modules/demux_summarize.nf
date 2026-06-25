@@ -1,5 +1,5 @@
 process DEMUX_SUMMARIZE {
-    publishDir path: "${params.outdir}/demux_summary", mode: 'copy', pattern: '*.csv'
+    //publishDir path: "${params.outdir}/demux_summary", mode: 'copy', pattern: '*.csv'
        
     input:
      path(fq_files)
