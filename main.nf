@@ -13,6 +13,8 @@ include { DEMUX_SUMMARIZE      } from './modules/demux_summarize.nf'
 include { NANOSTAT             } from './modules/nanostat.nf'
 include { MULTIQC              } from './modules/multiQC.nf'
 include { READ_LENGTH          } from './modules/read_length.nf'
+include { NANOSTAT_BASES       } from './modules/nanostat_bases.nf'
+include { MERGE_DEMUX_BASES    } from './modules/merge_demux_bases.nf'
 
 
 workflow {
@@ -170,5 +172,12 @@ workflow {
 
     READ_LENGTH(filtered_ch)
     NANOSTAT(filtered_ch)
-    MULTIQC(NANOSTAT.out.collect())
+
+    NANOSTAT_BASES(NANOSTAT.out.collect())
+    
+    mqc_config = file("${projectDir}/assets/multiqc_config.yaml")
+    MULTIQC(NANOSTAT.out.collect() ,
+    mqc_config)
+    MERGE_DEMUX_BASES( DEMUX_SUMMARIZE.out, NANOSTAT_BASES.out)
+    
 }
