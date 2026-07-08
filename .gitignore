@@ -15,3 +15,10 @@ files_for_latch/
 
 # Test data (large files)
 
+
+# other
+.nf-core.yml
+
+bin/old/
+modules/old/
+temp
