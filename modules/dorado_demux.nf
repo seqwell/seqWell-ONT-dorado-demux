@@ -13,7 +13,6 @@ process DORADO_DEMUX {
     path("${sample_id}_Demux_bam"),   emit: bam_dir,   optional: true
     path("${sample_id}_Demux_fastq"), emit: fastq_dir, optional: true
 
-    container 'genomicpariscentre/dorado:1.1.1'
 
     script:
     if (params.data_type == 'bam')

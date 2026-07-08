@@ -13,6 +13,8 @@ include { DEMUX_SUMMARIZE      } from './modules/demux_summarize.nf'
 include { NANOSTAT             } from './modules/nanostat.nf'
 include { MULTIQC              } from './modules/multiQC.nf'
 include { READ_LENGTH          } from './modules/read_length.nf'
+include { NANOSTAT_BASES       } from './modules/nanostat_bases.nf'
+include { MERGE_DEMUX_BASES    } from './modules/merge_demux_bases.nf'
 
 
 workflow {
@@ -31,11 +33,11 @@ workflow {
 
     if (use_bam) {
         log.info "data_type=bam  →  BAM input: dorado demux (BAM) → BAM-to-FASTQ → cutadapt → filter demux-BAM by cutadapt-FASTQ read IDs"
-        input_ch = Channel.fromPath(params.input + "/*.bam")
+        input_ch = channel.fromPath(params.input + "/*.bam")
                      .map { it -> tuple(it.baseName, it) }
     } else {
         log.info "data_type=fastq  →  FASTQ input: extract headers → dorado demux → reheader → cutadapt → FASTQ output only (no BAM created)"
-        input_ch = Channel.fromPath(params.input + "/*.fastq.gz")
+        input_ch = channel.fromPath(params.input + "/*.fastq.gz")
                      .map { it -> tuple(it.baseName.replace(".fastq", ""), it) }
     }
 
@@ -62,7 +64,7 @@ workflow {
         COMBINE_BARCODES_BAM(DORADO_DEMUX.out.bam_dir.collect())
 
         bam_barcode_ch = COMBINE_BARCODES_BAM.out.bam
-                           .flatMap { it instanceof List ? it : [it] }
+                           .flatMap { it -> ( it instanceof List) ? it : [it] }
                            .filter { it.name.endsWith('.bam') }
                            .map { bam -> tuple(bam.baseName, bam) }
 
@@ -82,7 +84,7 @@ workflow {
         // e.g. "barcode001.seqWell.fastq.gz" → key "barcode001"
         // This must match bam_barcode_ch which is also keyed by "barcode001"
         base_trimmed_ch = CUTADAPT_TRIM.out.fq
-                          .flatMap { it instanceof List ? it : [it] }
+                          .flatMap { it -> ( it instanceof List) ? it : [it] }
                           .filter { fq -> !fq.name.contains('tagged') && fq.size() > 20 }
 
         trimmed_ch = base_trimmed_ch
@@ -129,7 +131,7 @@ workflow {
         COMBINE_BARCODES(DORADO_DEMUX.out.fastq_dir.collect())
 
         fastq_barcode_ch = COMBINE_BARCODES.out.fastq
-                             .flatMap { it instanceof List ? it : [it] }
+                             .flatMap { it -> ( it instanceof List) ? it : [it] }
                              .map { fq -> tuple(fq.baseName.replace(".fastq", ""), fq) }
 
         // -----------------------------------------------------------
@@ -144,7 +146,7 @@ workflow {
         CUTADAPT_TRIM(REHEADER_READS.out.fq)
 
         trimmed_ch = CUTADAPT_TRIM.out.fq
-                       .flatMap { it instanceof List ? it : [it] }
+                       .flatMap { it -> ( it instanceof List) ? it : [it] }
                        .map { fq -> tuple(fq.baseName.replace(".fastq", ""), fq) }
 
         demuxed_ch = trimmed_ch
@@ -165,10 +167,17 @@ workflow {
 
     filtered_ch = demuxed_ch
                     .join(valid_ids_ch, by: 0)
-                    .map { sample_id, fq, flag -> tuple(sample_id, fq) }
+                    .map { sample_id, fq, _flag -> tuple(sample_id, fq) }
                     
 
     READ_LENGTH(filtered_ch)
     NANOSTAT(filtered_ch)
-    MULTIQC(NANOSTAT.out.collect())
+
+    NANOSTAT_BASES(NANOSTAT.out.collect())
+    
+   mqc_config = file("${projectDir}/assets/multiqc_config.yaml")
+   MULTIQC(NANOSTAT.out.collect().mix( NANOSTAT_BASES.out.q10_bases ).collect() ,
+    mqc_config)
+   MERGE_DEMUX_BASES( DEMUX_SUMMARIZE.out, NANOSTAT_BASES.out.bases)
+    
 }

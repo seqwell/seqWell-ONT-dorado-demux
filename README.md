@@ -102,7 +102,7 @@ The pipeline splits into two branches after the input type is determined:
 
 ## Dependencies
 
-- **Nextflow** 22.04.5-25.10.4
+- **Nextflow** >22.04.5
 - **Docker**
 
 ### Docker Containers
