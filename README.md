@@ -72,11 +72,11 @@ The pipeline splits into two branches after the input type is determined. In bot
    - **SPLIT_FASTQ** uses `seqkit split2` and always writes gzipped chunks, whether the input was `.fastq` or `.fastq.gz`.
    - **SPLIT_BAM** uses `samtools` + `awk` to distribute records round-robin across chunks. Every chunk keeps the full BAM header, and aux tags (e.g. MM/ML, RG) are preserved.
 
-     With multiple input files, or with `--split_n 1`, no splitting is done.
+   With multiple input files, or with `--split_n 1`, no splitting is done.
 
 ### BAM Input Steps
 
-1. **DORADO_DEMUX** (BAM mode): Demultiplexes input BAMs (or BAM chunks) using Dorado with custom 384 seqWell barcode sequences. Emits per-sample BAM directories (no FASTQ). Dorado threads are set to the task's CPU allocation (`--threads ${task.cpus}`), which is sized from the input file (see [`--large_input_gb`](#--large_input_gb)).
+1. **DORADO_DEMUX** (BAM mode): Demultiplexes input BAMs (or BAM chunks) using Dorado with custom 384 seqWell barcode sequences. Emits per-sample BAM directories (no FASTQ). Dorado threads are set to the task's CPU allocation (`--threads ${task.cpus}`), which is sized from the input file or set explicitly (see [Dorado resources](#dorado-resources)).
 
 2. **COMBINE_BARCODES_BAM**: Merges per-barcode BAM files from multiple demux directories into one BAM per barcode.
 
@@ -92,7 +92,7 @@ The pipeline splits into two branches after the input type is determined. In bot
 
 1. **EXTRACT_HEADER**: Runs `extract_fastq_tags.py` **before** demultiplexing, per input file or per chunk. It parses the Dorado FASTQ header `key=value` fields and converts them to SAM-format tags: `ch`→`ch:i`, `read`→`rn:i`, `start_time`→`st:Z`, `flow_cell_id`→`fn:Z`, `runid`→`RG:Z`, `barcode`→`BC:Z`, `barcode_score`→`bs:i`, `protocol_group_id`→`px:Z`, `sample_id`→`si:Z`, `parent_read_id`→`pi:Z`, and `basecall_model_version_id`→`bv:Z`. Fields not in this map are dropped. Accepts gzipped or uncompressed FASTQ (detected from file contents, not the extension). Writes a UUID-keyed TSV (`<sample>.uuid_tags.tsv`) that REHEADER_READS uses to restore this metadata as SAM-format tags after Dorado demux strips it.
 
-2. **DORADO_DEMUX** (FASTQ mode): Demultiplexes input FASTQs (or FASTQ chunks) using Dorado with custom 384 seqWell barcode sequences. Dorado reads gzipped or uncompressed FASTQ directly. Emits per-sample FASTQ directories (`--emit-fastq`, uncompressed). Dorado threads are set to the task's CPU allocation (`--threads ${task.cpus}`), which is sized from the input file (see [`--large_input_gb`](#--large_input_gb)).
+2. **DORADO_DEMUX** (FASTQ mode): Demultiplexes input FASTQs (or FASTQ chunks) using Dorado with custom 384 seqWell barcode sequences. Dorado reads gzipped or uncompressed FASTQ directly. Emits per-sample FASTQ directories (`--emit-fastq`, uncompressed). Dorado threads are set to the task's CPU allocation (`--threads ${task.cpus}`), which is sized from the input file or set explicitly (see [Dorado resources](#dorado-resources)).
 
 3. **COMBINE_BARCODES**: Merges per-barcode FASTQ files from multiple demux directories into one gzipped FASTQ per barcode.
 
@@ -188,8 +188,17 @@ Number of chunks to split the input into when the input directory contains a **s
 
 Splitting usually shortens wall-clock time on AWS Batch, where many small jobs run concurrently. On a single machine, the gain depends on the number of available cores.
 
+### Dorado Resources
+
+`DORADO_DEMUX` CPU and memory are chosen per task in one of two ways:
+
+1. **Fixed**, if `--dorado_cpus` and/or `--dorado_mem` are set. The value applies to every Dorado task.
+2. **Automatic** (default), by the size of the file each task receives, using `--large_input_gb`.
+
+Each of `--dorado_cpus` and `--dorado_mem` overrides independently. For example, setting only `--dorado_cpus` fixes the CPUs, and memory is still sized automatically.
+
 #### `--large_input_gb`
-Size threshold, in GB, that sets the resources for each `DORADO_DEMUX` task. Default: `1`.
+Size threshold, in GB, for automatic sizing. Default: `1`.
 
 | File received by the DORADO_DEMUX task | Resources |
 |---|---|
@@ -202,9 +211,17 @@ The size is checked per task, on the file that task demultiplexes: a split chunk
 - **A single large file run with `--split_n 1`** gets 4 CPU / 15 GB automatically, so Dorado isn't stuck on 2 threads.
 - **Very large inputs split into few chunks** can produce chunks above the threshold, which then also get 4 CPU / 15 GB. Raise `--split_n` to keep chunks small if you prefer more, smaller jobs.
 
-Decimal values are accepted (e.g. `--large_input_gb 0.5`).
+Decimal values are accepted (e.g. `--large_input_gb 0.5`). Ignored for any resource set with `--dorado_cpus` / `--dorado_mem`.
 
-> **Note:** with local execution, a "large" task needs at least 4 CPUs and 15 GB available on the machine (and in Docker Desktop's resource settings on macOS). On AWS Batch, the compute environment must offer an instance type with at least 4 vCPUs, otherwise large tasks stay queued.
+#### `--dorado_cpus`
+Fixed number of CPUs for **every** `DORADO_DEMUX` task. Dorado's `--threads` follows this value. Default: not set (automatic sizing).
+
+#### `--dorado_mem`
+Fixed memory, in GB, for **every** `DORADO_DEMUX` task. Accepts `32`, `32g`, `32G`, `32GB` or `'32 GB'`. Default: not set (automatic sizing).
+
+> **Note:** fixed values apply to split chunks too. With the default `--split_n 15`, `--dorado_cpus 16` requests 15 × 16 CPUs. When fixing resources for a single large file, you usually also want `--split_n 1`.
+
+> **Note:** with local execution, a task's CPUs and memory must fit on the machine (and in Docker Desktop's resource settings on macOS). On AWS Batch, the compute environment must offer an instance type large enough for the requested CPUs and memory, otherwise those tasks stay queued.
 
 ### Profiles
 
@@ -256,6 +273,19 @@ nextflow run main.nf \
     --outdir /path/to/output \
     --pool_ID my_run \
     --split_n 1 \
+    -resume -bg
+```
+
+**Single large FASTQ, no split, fixed Dorado resources:**
+```bash
+nextflow run main.nf \
+    --data_type fastq \
+    --input /path/to/single_fastq_directory \
+    --outdir /path/to/output \
+    --pool_ID my_run \
+    --split_n 1 \
+    --dorado_cpus 16 \
+    --dorado_mem 32g \
     -resume -bg
 ```
 
@@ -369,6 +399,6 @@ output_directory/
 
 - Splitting only applies to a **single** input file. Multi-file inputs (e.g. a standard `fastq_pass/` directory) are already demultiplexed in parallel, one Dorado job per file.
 - Chunks are intermediate files in the Nextflow work directory and are not published.
-- `DORADO_DEMUX` resources are chosen per task from the size of the file it receives (see [`--large_input_gb`](#--large_input_gb)), so split and unsplit runs are both sized sensibly without editing the config.
+- `DORADO_DEMUX` resources are chosen per task from the size of the file it receives, unless fixed with `--dorado_cpus` / `--dorado_mem` (see [Dorado resources](#dorado-resources)), so split and unsplit runs are both sized sensibly without editing the config.
 - Read order within each barcode may differ from the input order when splitting. This does not affect demultiplexing or downstream results.
 - Dorado writes uncompressed FASTQ, so the work directory can be several times larger than the input during a run. Use `cleanup = true` in `nextflow.config` to remove the work directory after a successful run (this disables `-resume` for that run).
