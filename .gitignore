@@ -40,4 +40,12 @@ assets/dorado_demux_flow.mmd
 
 single_bam_test_output/
 single_fastq_test_output/
+
+new_20261009/
+old_20261009/
 assets/dorado_ont_workflow_old.png
+
+test.sh
+large_mem_test/
+
+test_img.html
