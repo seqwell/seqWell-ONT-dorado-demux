@@ -18,7 +18,26 @@ files_for_latch/
 
 # other
 .nf-core.yml
+*.html
 
 bin/old/
 modules/old/
+modules/new/
 temp
+
+dockers/
+
+new/
+old/
+
+one_fastq_test_output/
+test_data/10G_ont_mixed.fastq.gz
+
+.DS_Store
+assets/dorado_demux_flow.svg
+assets/dorado_demux_flow.mmd
+
+
+single_bam_test_output/
+single_fastq_test_output/
+assets/dorado_ont_workflow_old.png

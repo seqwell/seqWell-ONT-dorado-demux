@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 """
-extract_fastq_tags.py  <input.fastq.gz>  <output.tsv>
-Parses Dorado FASTQ headers and writes SAM-format tags to TSV so that
-fastq_to_bam.py (which expects SAM-format tags) can parse them correctly.
+extract_fastq_tags.py  <input.fastq[.gz]>  <output.tsv>
+
+Parses Dorado FASTQ headers and writes the metadata as SAM-format tags to a
+UUID-keyed TSV, used by reheader_reads.py to restore header metadata after
+dorado demux strips it.
+
+Input may be gzipped or plain FASTQ (detected by magic bytes, not extension).
+
 Dorado FASTQ header format:
   @<uuid> runid=X read=N ch=N start_time=T flow_cell_id=X ...
+
+Output TSV (one line per read):
+  <uuid>\t <tag> <tag> ...      e.g.  <uuid>\t ch:i:123 rn:i:456 RG:Z:...
+
+Only fields listed in FIELD_MAP are kept; all others are dropped.
 """
 import gzip, sys, shutil, subprocess
 
@@ -28,7 +38,14 @@ FIELD_MAP = {
 }
 
 def open_fastq(path):
-    if path.endswith('.gz') and shutil.which('pigz'):
+    # detect gzip by magic bytes, not extension
+    with open(path, 'rb') as f:
+        is_gz = f.read(2) == b'\x1f\x8b'
+
+    if not is_gz:
+        return open(path, 'rb'), None          # plain FASTQ
+
+    if shutil.which('pigz'):
         proc = subprocess.Popen(['pigz', '-dc', '-p', '2', path],
                                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         return proc.stdout, proc
